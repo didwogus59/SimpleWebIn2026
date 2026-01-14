@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Status API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px 0;
+        }
+
+        input {
+            padding: 6px;
+            width: 100px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(3, 40px);
+            gap: 4px;
+            margin-top: 15px;
+        }
+
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f4f4f4;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .info {
+            margin-top: 10px;
+            color: #666;
+        }
+
+        .result {
+            background: #f9f9f9;
+            padding: 8px;
+            margin-top: 5px;
+        }
+            /* 0일 때 */
+        .zero {
+            background-color: #f0f0f0;
+            color: #aaa;
+        }
+
+        /* 0이 아닐 때 */
+        .active {
+            background-color: #ff6b6b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Status API Test</h2>
+
+<!-- POST -->
+<section>
+    <h3>POST /status</h3>
+    <input type="number" id="postValue" placeholder="숫자 입력" />
+    <button onclick="postStatus()">Post Status</button>
+    <div id="postResult" class="result">결과 없음</div>
+</section>
+
+<!-- GET -->
+<section>
+    <h3>GET /status</h3>
+    <button onclick="getStatus()">수동 Refresh</button>
+    <div id="grid" class="grid"></div>
+    <div class="info">3초마다 자동으로 상태를 갱신합니다.</div>
+</section>
+
+<script>
+    const BASE_URL = "http://localhost:8080/status";
+    const GRID_SIZE = 30;
+
+    function getStatus() {
+        fetch(BASE_URL)
+            .then(response => response.json())
+            .then(data => {
+                renderGrid(data);
+            })
+            .catch(err => {
+                console.error("GET 실패:", err);
+            });
+    }
+
+    function postStatus() {
+        const value = document.getElementById("postValue").value;
+
+        if (value === "") {
+            alert("숫자를 입력하세요");
+            return;
+        }
+
+        fetch(BASE_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: value
+        })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("postResult").textContent = data;
+                getStatus(); // POST 후 즉시 갱신
+            })
+            .catch(err => {
+                document.getElementById("postResult").textContent =
+                    "에러 발생: " + err;
+            });
+    }
+
+    function renderGrid(statusArray) {
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
+        
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const cell = document.createElement("div");
+            const value = statusArray[i] ?? 0;
+            cell.className = "cell";
+            cell.textContent = statusArray[i] !== undefined
+                ? statusArray[i]
+                : "";
+            if (value === 0) {
+                cell.classList.add("zero");
+            } else {
+                cell.classList.add("active");
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    // 최초 실행
+    getStatus();
+
+    // 3초마다 자동 Refresh
+    setInterval(getStatus, 2000);
+</script>
+
+</body>
+</html>
