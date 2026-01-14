@@ -16,7 +16,9 @@ public class SimepleController {
     
     @GetMapping
     public String GetSimple() {
-        return "simple rest api";
+        String test = null;
+
+        return Integer.toString(test.length());
     }
 
     @PostMapping
